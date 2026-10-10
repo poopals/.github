@@ -1,0 +1,36 @@
+name: PR title
+
+# Reusable: call from a repo with `uses: poopals/.github/.github/workflows/pr-title.yml@main`
+# Rules live in scripts/check-title.sh; allowed scopes in the calling repo's `.github/commit-scopes.txt`.
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  lint:
+    name: Conventional Commit title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/commit-scopes.txt
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/checkout@v4
+        with:
+          repository: poopals/.github
+          path: .shared
+          sparse-checkout: scripts
+
+      - name: Check PR title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.url }}
+        run: |
+          gh api --paginate "$PR_URL/commits" --jq '.[].commit.message | split("\n")[0]' > "$RUNNER_TEMP/commits.txt"
+          .shared/scripts/check-title.sh "$TITLE" .github/commit-scopes.txt "$RUNNER_TEMP/commits.txt"
