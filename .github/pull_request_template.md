@@ -1,7 +1,7 @@
 ## Summary
 
 <!-- What changes and why. The PR title becomes the commit on main:
-     feat|fix|perf|refactor(scope)!: subject [STORY-123]   e.g. `feat(chat): add mentions [POO-BACK-59]`
+     feat|fix|perf|refactor(scope)[!|#]: subject [STORY-123]   e.g. `feat(chat): add mentions [POO-BACK-59]`
      docs|chore|ci|test|build(...): subject               (no scope or story needed) -->
 
 Closes #<!-- required for feat/fix/perf/refactor: `Closes #123`, or `Refs #123` if the story needs more PRs -->
@@ -12,7 +12,8 @@ Closes #<!-- required for feat/fix/perf/refactor: `Closes #123`, or `Refs #123` 
 - [ ] fix — bug fix (patch release)
 - [ ] refactor / perf / test / build / ci / chore
 - [ ] docs only
-- [ ] **Breaking change** — title uses `!` (e.g. `feat(api)!: ...`); backend: skips the automatic CD bump and needs a manual deploy
+- [ ] **Breaking change** — title uses `!` (e.g. `feat(api)!: ...`); major release; backend: skips the automatic CD bump and needs a manual deploy
+- [ ] **No auto-deploy** — title uses `#` (e.g. `feat(api)#: ...`); version follows the type; backend: skips the automatic CD bump
 
 ## Checklist
 

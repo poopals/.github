@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Validates a Conventional Commit title; shared by the PR-title workflow and the commit-msg hook.
-#   feat|fix|perf|refactor  -> `type(scope)!: subject [STORY-123]`, scope from commit-scopes.txt
-#   docs|chore|ci|test|build|revert -> `type(scope)!: subject`, scope and story optional
+#   feat|fix|perf|refactor  -> `type(scope)[!|#]: subject [STORY-123]`, scope from commit-scopes.txt
+#   docs|chore|ci|test|build|revert -> `type(scope)[!|#]: subject`, scope and story optional
+#   `!` = breaking change (major), `#` = skip the automatic deploy (version from the type)
 # Usage: check-title.sh <title | commit-msg-file> [scopes-file] [pr-commit-subjects-file]
 #   file argument (hook mode): story reference not required, since the PR title is what lands on main
 #   PR_BODY env var (PR mode): functional PRs must link an issue, e.g. `Closes #123` or `Refs poopals/other-repo#4`
@@ -26,11 +27,11 @@ esac
 fail() {
   echo "Invalid title: $title" >&2
   echo "$1" >&2
-  echo "Expected: feat|fix|perf|refactor(scope): subject [STORY-123]  or  docs|chore|ci|test|build|revert[(scope)]: subject" >&2
+  echo "Expected: feat|fix|perf|refactor(scope)[!|#]: subject [STORY-123]  or  docs|chore|ci|test|build|revert[(scope)][!|#]: subject" >&2
   exit 1
 }
 
-pattern='^(feat|fix|perf|refactor|docs|chore|ci|test|build|revert)(\(([^)]+)\))?(!?): (.+)$'
+pattern='^(feat|fix|perf|refactor|docs|chore|ci|test|build|revert)(\(([^)]+)\))?([!#]?): (.+)$'
 [[ "$title" =~ $pattern ]] || fail "Title must follow Conventional Commits."
 type="${BASH_REMATCH[1]}"
 scope_list="${BASH_REMATCH[3]}"
@@ -61,7 +62,7 @@ esac
 if [ -n "$commits_file" ] && [ -f "$commits_file" ]; then
   title_scopes=",${scope_list// /},"
   missing=""
-  functional='^(feat|fix|perf|refactor)\(([^)]+)\)!?:'
+  functional='^(feat|fix|perf|refactor)\(([^)]+)\)[!#]?:'
   while IFS= read -r commit; do
     if [[ "$commit" =~ $functional ]]; then
       IFS=, read -ra commit_scopes <<<"${BASH_REMATCH[2]}"
