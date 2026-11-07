@@ -1,0 +1,56 @@
+name: Dependabot auto merge
+
+# Reusable: call from a repo with `uses: poopals/.github/.github/workflows/dependabot-automerge.yml@main`
+# Free plan has no native auto-merge or required checks, so this job is the only merge gate:
+# it waits for the Jenkins build of this exact commit and merges only if it succeeded.
+# Only minor and patch updates are merged; majors stay open for a human.
+on:
+  workflow_call:
+    inputs:
+      status-context:
+        description: Commit status that must be green before merging
+        type: string
+        default: continuous-integration/jenkins/pr-head
+      merge-method:
+        description: merge | squash | rebase
+        type: string
+        default: merge
+
+permissions:
+  contents: write
+  pull-requests: write
+  statuses: read
+
+jobs:
+  automerge:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    timeout-minutes: 60
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Wait for ${{ inputs.status-context }}, then merge minor and patch updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-minor' || steps.metadata.outputs.update-type == 'version-update:semver-patch'
+        run: |
+          while true; do
+            STATE=$(gh api "repos/$REPO/commits/$SHA/statuses" \
+              --jq "[.[] | select(.context == \"$CONTEXT\")][0].state // \"missing\"")
+            echo "$CONTEXT: $STATE"
+            case "$STATE" in
+              success) break ;;
+              failure|error) echo "Build failed, not merging"; exit 1 ;;
+            esac
+            sleep 45
+          done
+          gh pr merge "$PR_URL" --"$METHOD" --match-head-commit "$SHA"
+        env:
+          CONTEXT: ${{ inputs.status-context }}
+          METHOD: ${{ inputs.merge-method }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

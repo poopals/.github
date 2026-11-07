@@ -6,6 +6,7 @@ Shared defaults for every PooPals repo. This repo is public so GitHub applies th
 |---|---|
 | `.github/pull_request_template.md` | Default PR template for repos that have none of their own |
 | `.github/workflows/pr-title.yml` | Reusable workflow that checks the PR title and description |
+| `.github/workflows/dependabot-automerge.yml` | Reusable workflow: waits for the Jenkins `pr-head` status, then merges Dependabot minor/patch PRs |
 | `scripts/check-title.sh` | The rules; used by the workflow and, copied as `commit-msg`, by the local hook |
 | `scripts/next-version.sh` | Computes the next release version from the last tag and the commits since |
 
